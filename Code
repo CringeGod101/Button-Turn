@@ -1,0 +1,117 @@
+const int buttonPin = 4;     // the number of the pushbutton pin
+//Motor 1
+int pinAI1 = 9; //Direction
+int pinAI2 = 8; //Direction
+int pinPWA = 3; //Speed
+
+//Motor 2
+int pinBI1 = 11; //Direction
+int pinBI2 = 12; //Direction
+int pinPWB = 5; //Speed
+
+//Standby
+int pinSTBY = 10;
+  
+static boolean turnCW = 0;  //for motorDrive function
+static boolean turnCCW = 1; //for motorDrive function
+static boolean motor1 = 0;  //for motorDrive, motorStop, motorBrake functions
+static boolean motor2 = 1; 
+
+// variables will change:
+int buttonState = 0;         // variable for reading the pushbutton status
+
+void setup() {
+  pinMode(buttonPin, INPUT);
+  Serial.begin(9600);
+  pinMode(pinPWA, OUTPUT);
+  pinMode(pinAI1, OUTPUT);
+  pinMode(pinAI2, OUTPUT);
+
+  pinMode(pinPWB, OUTPUT);
+  pinMode(pinBI1, OUTPUT);
+  pinMode(pinBI2, OUTPUT);
+
+  pinMode(pinSTBY, OUTPUT);
+}
+
+void loop() {
+  // read the state of the pushbutton value:
+  motorsStandby();
+  buttonState = digitalRead(buttonPin);
+
+  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
+  if (buttonState == HIGH) {
+    // print text high:
+    Serial.print("high");
+
+
+  } else {
+    // print text low:
+    Serial.print("low");
+    motorDrive(motor1, turnCCW, 200);
+    delay(3000);
+    motorBrake(motor1);
+    
+  }
+}
+void motorDrive(boolean motorNumber, boolean motorDirection, int motorSpeed){
+
+
+  boolean pinIn1;  //Relates to AI1 or BI1 (depending on the motor number specified)
+
+
+//Specify the Direction to turn the motor
+  //Clockwise: AI1/BI1 = HIGH and AI2/BI2 = LOW
+  //Counter-Clockwise: AI1/BI1 = LOW and AI2/BI2 = HIGH
+  if (motorDirection == turnCW)
+    pinIn1 = HIGH;
+  else
+    pinIn1 = LOW;
+
+//Select the motor to turn, and set the direction and the speed
+  if(motorNumber == motor1)
+  {
+    digitalWrite(pinAI1, pinIn1);
+    digitalWrite(pinAI2, !pinIn1);  //This is the opposite of the AI1
+    analogWrite(pinPWA, motorSpeed);
+  }
+  else
+  {
+    digitalWrite(pinBI1, pinIn1);
+    digitalWrite(pinBI2, !pinIn1);  //This is the opposite of the BI1
+    analogWrite(pinPWB, motorSpeed);
+  }
+  
+    digitalWrite(pinSTBY, HIGH);
+
+  
+}
+  
+void motorBrake(boolean motorNumber){
+/*
+This "Short Brake"s the specified motor, by setting speed to zero
+*/
+
+  if (motorNumber == motor1)
+    analogWrite(pinPWA, 0);
+  else
+    analogWrite(pinPWB, 0);
+
+}
+
+
+void motorStop(boolean motorNumber){
+  if (motorNumber == motor1) {
+    digitalWrite(pinAI1, LOW);
+    digitalWrite(pinAI2, LOW);
+  }
+  else
+  {
+    digitalWrite(pinBI1, LOW);
+    digitalWrite(pinBI2, LOW);
+  } 
+}
+
+void motorsStandby(){
+  digitalWrite(pinSTBY, LOW);
+}
