@@ -1,0 +1,165 @@
+//Motor 1
+int pinAI1 = 9; //Direction
+int pinAI2 = 8; //Direction
+int pinPWMA = 3; //Speed
+
+//Motor 2
+int pinBI1 = 11; //Direction
+int pinBI2 = 12; //Direction
+int pinPWMB = 5; //Speed
+
+//Standby
+int pinSTBY = 10;
+
+//Constants to help remember the parameters
+static boolean turnCW = 0;  //for motorDrive function
+static boolean turnCCW = 1; //for motorDrive function
+static boolean motor1 = 0;  //for motorDrive, motorStop, motorBrake functions
+static boolean motor2 = 1;  //for motorDrive, motorStop, motorBrake functions
+
+
+void setup()
+{
+//Set the PIN Modes
+  pinMode(pinPWMA, OUTPUT);
+  pinMode(pinAI1, OUTPUT);
+  pinMode(pinAI2, OUTPUT);
+
+  pinMode(pinPWMB, OUTPUT);
+  pinMode(pinBI1, OUTPUT);
+  pinMode(pinBI2, OUTPUT);
+
+  pinMode(pinSTBY, OUTPUT);
+
+}
+
+void loop()
+{
+
+  //Drive both motors CW, full speed
+  motorDrive(motor1, turnCW, 255);
+  motorDrive(motor2, turnCW, 255);
+
+  //Keep driving for 2 secs
+  delay(2000);
+
+  //Turn towards motor1: Stop Motor1, slow Motor2
+  motorStop(motor1);
+  motorDrive(motor2, turnCW, 192);
+
+  //Keep turning for 2 secs
+  delay(2000);
+
+  //Turn in opposite direction: Stop Motor2, slow Motor1
+  motorDrive(motor1, turnCW, 192);
+  delay(250);
+  motorStop(motor2);
+
+  //Keep turning for 2 secs
+  delay(2000);
+
+  //Straighten up
+  motorDrive(motor2, turnCW, 192);
+  delay(500);
+
+  //Put motors into Standby
+  motorsStandby();
+  delay(1000);
+
+  //Do a tight turn towards motor1: Motor2 forward, Motor1 reverse
+  motorDrive(motor1, turnCCW, 192);
+  motorDrive(motor2, turnCW, 192);
+
+  //Keep turning for 2 secs
+  delay(2000);
+
+
+  //Apply Brakes, then into Standby
+  motorBrake(motor1);
+  motorBrake(motor2);
+  motorsStandby();
+
+  //Stand still for 5 secs, then we do it all over again...
+  delay(5000);
+
+}
+
+void motorDrive(boolean motorNumber, boolean motorDirection, int motorSpeed)
+{
+  /*
+  This Drives a specified motor, in a specific direction, at a specified speed:
+    - motorNumber: motor1 or motor2 ---> Motor 1 or Motor 2
+    - motorDirection: turnCW or turnCCW ---> clockwise or counter-clockwise
+    - motorSpeed: 0 to 255 ---> 0 = stop / 255 = fast
+  */
+
+  boolean pinIn1;  //Relates to AI1 or BI1 (depending on the motor number specified)
+
+
+//Specify the Direction to turn the motor
+  //Clockwise: AI1/BI1 = HIGH and AI2/BI2 = LOW
+  //Counter-Clockwise: AI1/BI1 = LOW and AI2/BI2 = HIGH
+  if (motorDirection == turnCW)
+    pinIn1 = HIGH;
+  else
+    pinIn1 = LOW;
+
+//Select the motor to turn, and set the direction and the speed
+  if(motorNumber == motor1)
+  {
+    digitalWrite(pinAI1, pinIn1);
+    digitalWrite(pinAI2, !pinIn1);  //This is the opposite of the AI1
+    analogWrite(pinPWMA, motorSpeed);
+  }
+  else
+  {
+    digitalWrite(pinBI1, pinIn1);
+    digitalWrite(pinBI2, !pinIn1);  //This is the opposite of the BI1
+    analogWrite(pinPWMB, motorSpeed);
+  }
+
+
+
+//Finally , make sure STBY is disabled - pull it HIGH
+  digitalWrite(pinSTBY, HIGH);
+
+}
+
+void motorBrake(boolean motorNumber)
+{
+/*
+This "Short Brake"s the specified motor, by setting speed to zero
+*/
+
+  if (motorNumber == motor1)
+    analogWrite(pinPWMA, 0);
+  else
+    analogWrite(pinPWMB, 0);
+
+}
+
+
+void motorStop(boolean motorNumber)
+{
+  /*
+  This stops the specified motor by setting both IN pins to LOW
+  */
+  if (motorNumber == motor1) {
+    digitalWrite(pinAI1, LOW);
+    digitalWrite(pinAI2, LOW);
+  }
+  else
+  {
+    digitalWrite(pinBI1, LOW);
+    digitalWrite(pinBI2, LOW);
+  } 
+}
+
+
+void motorsStandby()
+{
+  /*
+  This puts the motors into Standby Mode
+  */
+  digitalWrite(pinSTBY, LOW);
+}
